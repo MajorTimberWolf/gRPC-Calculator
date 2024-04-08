@@ -13,15 +13,41 @@ struct CalculatorService {}
 
 #[tonic::async_trait]
 impl Calculator for CalculatorService {
+    
+    // Add functionality
+    
     async fn add(
         &self,
         request: tonic::Request<proto::CalculationRequest>,
     ) -> Result<tonic::Response<proto::CalculationReponse>, tonic::Status> {
         println!("Got a request: {:?}", request);
+
         let input = request.get_ref();
         let response = proto::CalculationReponse {
             result: input.a + input.b,
         };
+
+        Ok(tonic::Response::new(response))
+    }
+
+    //Divide Functionality
+
+    async fn divide(
+        &self,
+        request: tonic::Request<proto::CalculationRequest>,
+    ) -> Result<tonic::Response<proto::CalculationReponse>, tonic::Status> {
+        println!("Got a request: {:?}", request);
+
+        let input = request.get_ref();
+
+        if input.b == 0{
+            return Err(tonic::Status::invalid_argument("Cannot Divide by Zero"));
+        }
+
+        let response = proto::CalculationReponse {
+            result: input.a / input.b,
+        };
+
         Ok(tonic::Response::new(response))
     }
 }
@@ -29,7 +55,6 @@ impl Calculator for CalculatorService {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
-
     let calc = CalculatorService::default();
 
     let service = tonic_reflection::server::Builder::configure()
