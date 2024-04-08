@@ -13,3 +13,7 @@ message CalculationRequest {
 }
 
 message CalculationReponse { int64 result = 1; }
+
+service Admin{
+    
+}

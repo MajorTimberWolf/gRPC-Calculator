@@ -8,19 +8,29 @@ mod proto {
         tonic::include_file_descriptor_set!("calculator_descriptor");
 }
 
+type State = std::sync::Arc<tokio::sync::RwLock<u64>>;
 #[derive(Debug, Default)]
-struct CalculatorService {}
+struct CalculatorService {
+    state: State,
+}
+
+impl CalculatorService {
+    async fn increment_counter(&self) {
+        let mut count = self.state.write().await;
+        *count += 1;
+        println!("Request count: {}", *count);
+    }
+}
 
 #[tonic::async_trait]
 impl Calculator for CalculatorService {
-    
     // Add functionality
-    
+
     async fn add(
         &self,
         request: tonic::Request<proto::CalculationRequest>,
     ) -> Result<tonic::Response<proto::CalculationReponse>, tonic::Status> {
-        println!("Got a request: {:?}", request);
+        self.increment_counter().await;
 
         let input = request.get_ref();
         let response = proto::CalculationReponse {
@@ -36,11 +46,11 @@ impl Calculator for CalculatorService {
         &self,
         request: tonic::Request<proto::CalculationRequest>,
     ) -> Result<tonic::Response<proto::CalculationReponse>, tonic::Status> {
-        println!("Got a request: {:?}", request);
+        self.increment_counter().await;
 
         let input = request.get_ref();
 
-        if input.b == 0{
+        if input.b == 0 {
             return Err(tonic::Status::invalid_argument("Cannot Divide by Zero"));
         }
 
