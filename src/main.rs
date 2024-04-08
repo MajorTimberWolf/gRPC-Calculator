@@ -110,8 +110,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     Server::builder()
+        .accept_http1(true)
+        .layer(tower_http::cors::CorsLayer::permissive())
         .add_service(service)
-        .add_service(CalculatorServer::new(calc))
+        .add_service(tonic_web::enable(CalculatorServer::new(calc)))
         .add_service(AdminServer::with_interceptor(admin, check_auth))
         .serve(addr)
         .await?;
