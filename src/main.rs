@@ -1,3 +1,4 @@
+use proto::admin_server::{Admin, AdminServer};
 use proto::calculator_server::{Calculator, CalculatorServer};
 use tonic::transport::Server;
 
@@ -61,11 +62,35 @@ impl Calculator for CalculatorService {
         Ok(tonic::Response::new(response))
     }
 }
+#[derive(Default, Debug)]
+struct AdminService {
+    state: State,
+}
+#[tonic::async_trait]
+impl Admin for AdminService {
+    async fn get_request_count(
+        &self,
+        _request: tonic::Request<proto::GetCountRequest>,
+    ) -> Result<tonic::Response<proto::CounterResponse>, tonic::Status> {
+        let count = self.state.read().await;
+        let response = proto::CounterResponse { count: *count };
+
+        Ok(tonic::Response::new(response))
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
-    let calc = CalculatorService::default();
+
+    let state = State::default();
+
+    let calc = CalculatorService {
+        state: state.clone(),
+    };
+    let admin = AdminService {
+        state: state.clone(),
+    };
 
     let service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(proto::FILE_DESCRIPTOR_SET)
@@ -74,6 +99,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Server::builder()
         .add_service(service)
         .add_service(CalculatorServer::new(calc))
+        .add_service(AdminServer::new(admin))
         .serve(addr)
         .await?;
 
