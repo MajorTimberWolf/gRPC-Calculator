@@ -4,6 +4,7 @@ package calculator;
 
 service Calculator{
     rpc Add(CalculationRequest) returns (CalculationReponse);
+    rpc Divide(CalculationRequest) returns (CalculationReponse);
 }
 
 message CalculationRequest {
